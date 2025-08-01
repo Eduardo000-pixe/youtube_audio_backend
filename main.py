@@ -9,7 +9,14 @@ app = FastAPI()
 DOWNLOAD_FOLDER = "downloads"
 COOKIE_FILE = "youtube.com_cookies.txt"
 
+# Criar pasta de downloads se não existir
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+
+# ✅ Recriar o arquivo cookies a partir da variável de ambiente
+cookies_env = os.getenv("YT_COOKIES")
+if cookies_env:
+    with open(COOKIE_FILE, "w", encoding="utf-8") as f:
+        f.write(cookies_env)
 
 def limpar_downloads_antigos(ext):
     # Remove arquivos antigos do tipo ext para evitar confusão
