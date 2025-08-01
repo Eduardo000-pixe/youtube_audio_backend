@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse, JSONResponse
 import subprocess
 import os
 import glob
+from urllib.parse import urlparse, urlunparse
 
 app = FastAPI()
 
@@ -18,8 +19,13 @@ if cookies_env:
     with open(COOKIE_FILE, "w", encoding="utf-8") as f:
         f.write(cookies_env)
 
+# ✅ Função para limpar parâmetros extras da URL
+def limpar_url(url: str) -> str:
+    parsed = urlparse(url)
+    url_limpa = urlunparse(parsed._replace(query=''))
+    return url_limpa
+
 def limpar_downloads_antigos(ext):
-    # Remove arquivos antigos do tipo ext para evitar confusão
     arquivos = glob.glob(os.path.join(DOWNLOAD_FOLDER, f"*.{ext}"))
     for arq in arquivos:
         try:
@@ -30,6 +36,9 @@ def limpar_downloads_antigos(ext):
 def baixar_audio(video_url: str):
     limpar_downloads_antigos("mp3")
     output_template = os.path.join(DOWNLOAD_FOLDER, "%(title)s.%(ext)s")
+
+    # ✅ Limpar URL
+    video_url = limpar_url(video_url)
 
     command = [
         "yt-dlp",
@@ -43,7 +52,6 @@ def baixar_audio(video_url: str):
 
     subprocess.run(command, check=True)
 
-    # Depois de baixar, pegar o arquivo mp3 mais recente na pasta
     arquivos = glob.glob(os.path.join(DOWNLOAD_FOLDER, "*.mp3"))
     if not arquivos:
         raise Exception("Erro: arquivo mp3 não encontrado após download.")
@@ -53,6 +61,9 @@ def baixar_audio(video_url: str):
 def baixar_video(video_url: str):
     limpar_downloads_antigos("mp4")
     output_template = os.path.join(DOWNLOAD_FOLDER, "%(title)s.%(ext)s")
+
+    # ✅ Limpar URL
+    video_url = limpar_url(video_url)
 
     command = [
         "yt-dlp",
