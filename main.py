@@ -13,13 +13,13 @@ COOKIE_FILE = "youtube.com_cookies.txt"
 # Criar pasta de downloads se não existir
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
-# ✅ Recriar o arquivo cookies a partir da variável de ambiente
+# Recriar o arquivo cookies a partir da variável de ambiente
 cookies_env = os.getenv("YT_COOKIES")
 if cookies_env:
     with open(COOKIE_FILE, "w", encoding="utf-8") as f:
         f.write(cookies_env)
 
-# ✅ Função para limpar parâmetros extras da URL
+# Função para limpar parâmetros extras da URL
 def limpar_url(url: str) -> str:
     parsed = urlparse(url)
     url_limpa = urlunparse(parsed._replace(query=''))
@@ -37,7 +37,7 @@ def baixar_audio(video_url: str):
     limpar_downloads_antigos("mp3")
     output_template = os.path.join(DOWNLOAD_FOLDER, "%(title)s.%(ext)s")
 
-    # ✅ Limpar URL
+    # Limpar URL
     video_url = limpar_url(video_url)
 
     command = [
@@ -62,7 +62,7 @@ def baixar_video(video_url: str):
     limpar_downloads_antigos("mp4")
     output_template = os.path.join(DOWNLOAD_FOLDER, "%(title)s.%(ext)s")
 
-    # ✅ Limpar URL
+    # Limpar URL
     video_url = limpar_url(video_url)
 
     command = [
@@ -98,6 +98,34 @@ def route_video(url: str = Query(...)):
     try:
         caminho = baixar_video(url)
         return FileResponse(caminho, filename=os.path.basename(caminho))
+    except Exception as e:
+        return {"erro": str(e)}
+
+# Novas rotas para funcionar bem em navegadores (GET que retorna arquivo para download)
+
+@app.get("/download-mp3")
+def download_mp3(url: str = Query(...)):
+    try:
+        caminho = baixar_audio(url)
+        return FileResponse(
+            caminho,
+            media_type="audio/mpeg",
+            filename=os.path.basename(caminho),
+            headers={"Content-Disposition": f"attachment; filename={os.path.basename(caminho)}"}
+        )
+    except Exception as e:
+        return {"erro": str(e)}
+
+@app.get("/download-video")
+def download_video(url: str = Query(...)):
+    try:
+        caminho = baixar_video(url)
+        return FileResponse(
+            caminho,
+            media_type="video/mp4",
+            filename=os.path.basename(caminho),
+            headers={"Content-Disposition": f"attachment; filename={os.path.basename(caminho)}"}
+        )
     except Exception as e:
         return {"erro": str(e)}
 
