@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import subprocess
 import os
 import glob
@@ -62,6 +62,10 @@ def baixar_video(video_url: str):
         raise Exception("Erro: arquivo mp4 não encontrado após download.")
     arquivo_baixado = max(arquivos, key=os.path.getctime)
     return arquivo_baixado
+
+@app.get("/")
+def home():
+    return JSONResponse(content={"mensagem": "Servidor online. Use /baixar/audio ou /baixar/video com ?url="})
 
 @app.get("/baixar/audio")
 def route_audio(url: str = Query(...)):
